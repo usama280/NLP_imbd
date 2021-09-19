@@ -27,7 +27,7 @@ class IMDBSentiClassifier(pl.LightningModule):
         def _prepare_ds(folder):
             ds = nlp.load_dataset('imdb', split=f'{folder}[:5%]')
             ds = ds.map(_tokenize)
-            ds.set_format(type='torch', columns=['input_ids', 'label']) #Maybe remove
+            ds.set_format(type='torch', columns=['input_ids', 'label']) #?
             
             return ds
         
@@ -37,22 +37,22 @@ class IMDBSentiClassifier(pl.LightningModule):
         
     def forward(self, input_ids):
         mask = (input_ids != 0).float()
-        logits = self.model(input_ids, mask)
+        preds = self.model(input_ids, mask)
         
-        return logits[0]
+        return preds[0]
     
     
     
     def training_step(self, batch, batch_idx):
-        logits = self.forward(batch['input_ids'])
-        loss = self.loss(logits, batch['label']).mean()
+        preds = self.forward(batch['input_ids'])
+        loss = self.loss(preds, batch['label']).mean()
         return {'loss':loss, 'log':{'train_loss':loss}}
 
     
     def validation_step(self, batch, batch_idx):
-        logits = self.forward(batch['input_ids'])
-        loss = self.loss(logits, batch['label'])
-        acc = (logits.argmax(-1)==batch['label']).float()
+        preds = self.forward(batch['input_ids'])
+        loss = self.loss(preds, batch['label'])
+        acc = (preds.argmax(-1)==batch['label']).float()
         
         return {'loss':loss, 'acc':acc}
     
